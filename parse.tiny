@@ -1,0 +1,126 @@
+%%
+Tiny       -> PROGRAM Name ':' Consts Enums 
+                            Dclns Subprogs 
+                            Body Name '.'       	=> "program";
+
+Dclns      -> VAR (Dcln ';')+				=> "dclns"
+           -> 					     	=> "dclns";
+
+Dcln       -> Name list ',' ':' Name			=> "var";
+
+Consts     -> CONST (Con ';')+                          => "consts"
+	   -> 						=> "consts";
+
+Con        -> Name EQ Constants	         		=> "const";
+
+Constants  -> Chrs
+	   -> Ints
+	   -> Name;        
+
+Enums      -> TYPE (Typ ';')+        			=> "types"
+	   -> 						=> "types";
+
+Typ        -> Name EQ Literals				=> "type";
+
+Literals   -> '(' Name list ',' ')'			=> "lit";
+
+Subprogs   -> (Subroutines)+                            => "subprogs" 
+	   -> 					  	=> "subprogs";
+
+Subroutines -> Function					
+	    -> Procedure; 				
+
+Function   -> FUNCTION Name '(' Params ')'
+		 ':' Name ';' Consts Enums Dclns 
+		 Body Name ';'                          => "function";
+
+Procedure  -> PROCEDURE Name '(' Params ')'
+		 ';' Consts Enums Dclns 
+		 Body Name ';'                          => "procedure";
+
+Params     -> (Dcln list ';')+ 				=> "params";
+
+Body       -> BEGINX Statement list ';' END      	=> "block";
+
+Statement  -> Name ASSIGNMENT Expression          	=> "assign"
+           -> Name SWAP Name                            => "swap"
+           -> OUTPUT '(' MExpression list ',' ')'       => "output"
+           -> IF Expression THEN Statement
+                            (ELSE Statement)?      	=> "if"
+           -> WHILE Expression DO Statement      	=> "while"
+           -> REPEAT Statement list ';' UNTIL 
+           			Expression              => "repeat"
+           -> LOOP Statement list ';' POOL              => "loop"
+           -> EXITX                                     => "exit"
+           -> FOR Name ASSIGNMENT Expression 
+           		UPTO Expression DO Statement    => "upto"
+           -> FOR Name ASSIGNMENT Expression 
+           		DOWNTO Expression DO Statement  => "downto"
+           -> CASE Expression OF (CaseClause)+
+           		  (OtherwiseClause)? END        => "case"
+           -> READ '(' MName list ',' ')'             	=> "read"
+           -> Name '(' Expression list ',' ')'          => "call"
+           -> RETURN '(' Expression ')' 		=> "return"
+           -> Body
+	   ->                                        	=> "<null>";
+
+MName      -> Name 					=> "type_disambiguation";
+
+MExpression -> Expression 				=> "type_disambiguation"
+	    -> Strs					=> "type_disambiguation";
+
+CaseClause -> Cl ':' Statement ';'                      => "case_clause";
+
+Cl         -> RangeStuf RANGE RangeStuf    	        => "range"
+           -> RangeStuf;
+
+RangeStuf  -> Name
+	   -> Chrs
+	   -> Ints;
+
+OtherwiseClause -> OTHERWISE Statement ';'?             => "otherwise";
+
+Expression -> Term	                         		
+	   -> Term LTE Term				=> "<="
+	   -> Term EQ Term				=> "="
+	   -> Term NE Term				=> "<>"
+	   -> Term GTE Term				=> ">="
+	   -> Term LT Term				=> "<"
+	   -> Term GT Term				=> ">";
+
+Term       -> Primary 
+	   -> Term '+' Primary				=> "+"
+	   -> Term '-' Primary				=> "-"
+	   -> Term OR  Primary                          => "or";
+
+Primary    -> Secondary
+	   -> Primary '*' Secondary                     => "*"
+	   -> Primary '/' Secondary                     => "/"
+	   -> Primary AND Secondary			=> "and"
+	   -> Primary MOD Secondary                     => "mod";
+
+Secondary  -> '-' Secondary                            	=> "-"
+	   -> '+' Secondary                             => "+"
+	   -> NOT Secondary                             => "not"
+	   -> Tertiary;
+
+Tertiary   -> A EXP Tertiary                     	=> "exp"
+	   -> A;
+
+A	   -> EOFX					=> "eof"
+           -> Name
+           -> Ints
+           -> Chrs
+           -> SUCC '(' Expression ')'			=> "succ"
+           -> PRED '(' Expression ')'			=> "pred"
+           -> ORD '(' Expression ')'			=> "ord"
+           -> CHR '(' Expression ')'			=> "chr"
+           -> Name '(' Expression list ',' ')'          => "call"
+           -> '(' Expression ')';
+
+Name       -> IDENTIFIER				=> "<identifier>";
+
+Ints       -> INTEGER_NUM				=> "<integer>";
+
+Chrs       -> CHAR                                      => "<char>";
+Strs       -> STRING 					=> "<string>";
